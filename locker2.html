@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quản lý Tủ Locker</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 0;
+      background-color: #f7f7f7;
+    }
+    header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+      font-size: 24px;
+    }
+    main {
+      max-width: 1200px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-section, .search-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .form-section input, .form-section select, .search-section input {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      flex: 1 1 150px;
+    }
+    .form-section button, .search-section button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .form-section button:hover, .search-section button:hover {
+      background-color: #2980b9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      background-color: #ecf0f1;
+    }
+    .btn {
+      padding: 6px 10px;
+      margin: 0 2px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: white;
+    }
+    .btn:hover {
+      opacity: 0.8;
+    }
+    .btn-danger {
+      background-color: #e74c3c;
+    }
+    .btn-edit {
+      background-color: #f39c12;
+    }
+    .hidden {
+      display: none;
+    }
+    #loginSection {
+      max-width: 400px;
+      margin: 100px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    #loginSection input {
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #loginSection button {
+      width: 100%;
+      padding: 10px;
+      background-color: #2ecc71;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      color: white;
+    }
+    #loginSection button:hover {
+      background-color: #27ae60;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginSection">
+    <h2>Đăng nhập</h2>
+    <input type="text" id="username" placeholder="Tài khoản" />
+    <input type="password" id="password" placeholder="Mật khẩu" />
+    <button onclick="login()">Đăng nhập</button>
+    <p id="loginMessage" style="color:red;"></p>
+  </div>
+
+  <div id="appSection" class="hidden">
+    <header>Quản lý Tủ Locker</header>
+    <main>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Danh sách Tủ Locker</h2>
+        <button onclick="logout()" class="btn btn-danger">Đăng xuất</button>
+      </div>
+
+      <div class="form-section">
+        <input id="maTu" placeholder="Mã tủ" />
+        <input id="maLocker" placeholder="Mã Locker" />
+        <select id="nhaMay">
+          <option value="">-- Chọn Nhà máy --</option>
+          <option value="Fac 1">Fac 1</option>
+          <option value="Fac 2">Fac 2</option>
+          <option value="Fac 3">Fac 3</option>
+          <option value="Fac 5">Fac 5</option>
+        </select>
+        <input id="tang" placeholder="Tầng" type="number" min="1" />
+        <input id="soNguoi" placeholder="Số người (1-4)" type="number" min="1" max="4" />
+        <input id="maNV" placeholder="Mã nhân viên" />
+        <input id="hoTen" placeholder="Tên" />
+        <input id="boPhan" placeholder="Bộ phận" />
+        <input id="chucVu" placeholder="Chức vụ" />
+        <input id="ngayCap" type="date" />
+        <select id="trangThai">
+          <option>Đang dùng</option>
+          <option>Không dùng</option>
+        </select>
+        <select id="hoatDong">
+          <option value="true">Có</option>
+          <option value="false">Không</option>
+        </select>
+        <button onclick="addOrUpdateLocker()">Thêm</button>
+      </div>
+
+      <div class="search-section">
+        <input type="text" id="searchInput" placeholder="Tìm kiếm mã nhân viên hoặc mã locker" oninput="renderLockers()" />
+        <button onclick="exportToExcel()">Xuất Excel</button>
+        <input type="file" id="excelInput" accept=".xlsx" onchange="importFromExcel(event)" />
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Mã Tủ</th><th>Mã Locker</th><th>Nhà Máy</th><th>Tầng</th><th>Số Người</th>
+            <th>Mã NV</th><th>Họ Tên</th><th>Bộ Phận</th><th>Chức Vụ</th><th>Ngày Cấp</th>
+            <th>Trạng Thái</th><th>Hoạt Động</th><th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="lockerBody"></tbody>
+      </table>
+    </main>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script>
+    const adminUser = { username: "admin", password: "123456" };
+
+    let lockers = [];
+    let editIndex = -1;
+
+    window.onload = () => {
+      if(localStorage.getItem("loggedIn") === "true") {
+        showApp();
+      }
+    };
+
+    function login() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value;
+
+      if(user === adminUser.username && pass === adminUser.password) {
+        localStorage.setItem("loggedIn", "true");
+        showApp();
+      } else {
+        document.getElementById("loginMessage").innerText = "Tài khoản hoặc mật khẩu sai!";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("loggedIn");
+      location.reload();
+    }
+
+    function showApp() {
+      document.getElementById("loginSection").classList.add("hidden");
+      document.getElementById("appSection").classList.remove("hidden");
+      loadData();
+      renderLockers();
+    }
+
+    function saveData() {
+      localStorage.setItem("lockers", JSON.stringify(lockers));
+    }
+
+    function loadData() {
+      const data = localStorage.getItem("lockers");
+      if(data) lockers = JSON.parse(data);
+      else lockers = [];
+    }
+
+    function clearForm() {
+      const fields = ["maTu","maLocker","nhaMay","tang","soNguoi","maNV","hoTen","boPhan","chucVu","ngayCap","trangThai","hoatDong"];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if(el.tagName === "SELECT") el.selectedIndex = 0;
+        else el.value = "";
+      });
+      editIndex = -1;
+      document.querySelector(".form-section button").innerText = "Thêm";
+    }
+
+    function addOrUpdateLocker() {
+      const maTu = document.getElementById("maTu").value.trim();
+      const maLocker = document.getElementById("maLocker").value.trim();
+      const nhaMay = document.getElementById("nhaMay").value;
+      const tang = Number(document.getElementById("tang").value);
+      const soNguoi = Number(document.getElementById("soNguoi").value);
+      const maNV = document.getElementById("maNV").value.trim();
+      const hoTen = document.getElementById("hoTen").value.trim();
+      const boPhan = document.getElementById("boPhan").value.trim();
+      const chucVu = document.getElementById("chucVu").value.trim();
+      const ngayCap = document.getElementById("ngayCap").value;
+      const trangThai = document.getElementById("trangThai").value;
+      const hoatDong = document.getElementById("hoatDong").value === "true";
+
+      if(!maTu || !maLocker || !nhaMay || !tang || !soNguoi || soNguoi < 1 || soNguoi > 4) {
+        alert("Vui lòng nhập đầy đủ và đúng định dạng. Số người phải từ 1 đến 4.");
+        return;
+      }
+
+      // Kiểm tra tổng số người trên mã locker
+      let tongSoNguoi = soNguoi;
+      lockers.forEach((locker, idx) => {
+        if(locker.maLocker === maLocker && idx !== editIndex) {
+          tongSoNguoi += locker.soNguoi;
+        }
+      });
+      if(tongSoNguoi > 4) {
+        alert(`Tổng số người dùng mã locker "${maLocker}" vượt quá 4.`);
+        return;
+      }
+
+      const lockerData = { maTu, maLocker, nhaMay, tang, soNguoi, maNV, hoTen, boPhan, chucVu, ngayCap, trangThai, hoatDong };
+
+      if(editIndex === -1) {
+        lockers.push(lockerData);
+      } else {
+        lockers[editIndex] = lockerData;
+      }
+      saveData();
+      renderLockers();
+      clearForm();
+    }
+
+    function renderLockers() {
+      const tbody = document.getElementById("lockerBody");
+      tbody.innerHTML = "";
+      const search = document.getElementById("searchInput").value.toLowerCase();
+
+      lockers.forEach((locker, idx) => {
+        if(locker.maNV.toLowerCase().includes(search) || locker.maLocker.toLowerCase().includes(search)) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${locker.maTu}</td>
+            <td>${locker.maLocker}</td>
+            <td>${locker.nhaMay}</td>
+            <td>${locker.tang}</td>
+            <td>${locker.soNguoi}</td>
+            <td>${locker.maNV}</td>
+            <td>${locker.hoTen}</td>
+            <td>${locker.boPhan}</td>
+            <td>${locker.chucVu}</td>
+            <td>${locker.ngayCap}</td>
+            <td>${locker.trangThai}</td>
+            <td>${locker.hoatDong ? "Có" : "Không"}</td>
+            <td>
+              <button class="btn btn-edit" onclick="editLocker(${idx})">Sửa</button>
+              <button class="btn btn-danger" onclick="deleteLocker(${idx})">Xóa</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      });
+    }
+
+    function editLocker(idx) {
+      const locker = lockers[idx];
+      document.getElementById("maTu").value = locker.maTu;
+      document.getElementById("maLocker").value = locker.maLocker;
+      document.getElementById("nhaMay").value = locker.nhaMay;
+      document.getElementById("tang").value = locker.tang;
+      document.getElementById("soNguoi").value = locker.soNguoi;
+      document.getElementById("maNV").value = locker.maNV;
+      document.getElementById("hoTen").value = locker.hoTen;
+      document.getElementById("boPhan").value = locker.boPhan;
+      document.getElementById("chucVu").value = locker.chucVu;
+      document.getElementById("ngayCap").value = locker.ngayCap;
+      document.getElementById("trangThai").value = locker.trangThai;
+      document.getElementById("hoatDong").value = locker.hoatDong ? "true" : "false";
+
+      editIndex = idx;
+      document.querySelector(".form-section button").innerText = "Cập nhật";
+    }
+
+    function deleteLocker(idx) {
+      if(confirm("Bạn có chắc muốn xóa tủ locker này?")) {
+        lockers.splice(idx, 1);
+        saveData();
+        renderLockers();
+        clearForm();
+      }
+    }
+
+    // Xuất Excel
+    function exportToExcel() {
+      if(lockers.length === 0) {
+        alert("Chưa có dữ liệu để xuất.");
+        return;
+      }
+      const wb = XLSX.utils.book_new();
+      const ws_data = [
+        ["Mã Tủ","Mã Locker","Nhà Máy","Tầng","Số Người","Mã NV","Họ Tên","Bộ Phận","Chức Vụ","Ngày Cấp","Trạng Thái","Hoạt Động"]
+      ];
+      lockers.forEach(l => {
+        ws_data.push([
+          l.maTu, l.maLocker, l.nhaMay, l.tang, l.soNguoi, l.maNV, l.hoTen, l.boPhan, l.chucVu, l.ngayCap, l.trangThai, l.hoatDong ? "Có" : "Không"
+        ]);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      XLSX.utils.book_append_sheet(wb, ws, "Lockers");
+      XLSX.writeFile(wb, "lockers.xlsx");
+    }
+
+    // Nhập Excel
+    function importFromExcel(event) {
+      const file = event.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type: "array"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, {defval:""});
+
+        // Kiểm tra dữ liệu trước khi gán
+        const newLockers = json.map(row => ({
+          maTu: row["Mã Tủ"] || "",
+          maLocker: row["Mã Locker"] || "",
+          nhaMay: row["Nhà Máy"] || "",
+          tang: Number(row["Tầng"]) || 1,
+          soNguoi: Math.min(Number(row["Số Người"]) || 1, 4),
+          maNV: row["Mã NV"] || "",
+          hoTen: row["Họ Tên"] || "",
+          boPhan: row["Bộ Phận"] || "",
+          chucVu: row["Chức Vụ"] || "",
+          ngayCap: row["Ngày Cấp"] || "",
+          trangThai: row["Trạng Thái"] || "Đang dùng",
+          hoatDong: (row["Hoạt Động"] || "").toLowerCase() === "có"
+        }));
+
+        const lockerMap = {};
+        for(const l of newLockers) {
+          lockerMap[l.maLocker] = (lockerMap[l.maLocker] || 0) + l.soNguoi;
+          if(lockerMap[l.maLocker] > 4) {
+            alert(`Dữ liệu nhập từ Excel vi phạm giới hạn số người tối đa 4 cho mã locker "${l.maLocker}". Vui lòng chỉnh sửa dữ liệu.`);
+            return;
+          }
+        }
+
+        lockers = newLockers;
+        saveData();
+        renderLockers();
+      };
+      reader.readAsArrayBuffer(file);
+      event.target.value = "";
+    }
+  </script>
+</body>
+</html>
